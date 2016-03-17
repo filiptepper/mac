@@ -1,0 +1,169 @@
+#!/bin/sh
+
+fancy_echo() {
+  local fmt="$1"; shift
+
+  # shellcheck disable=SC2059
+  printf "\n$fmt\n" "$@"
+}
+
+gem_install_or_update() {
+  if gem list "$1" --installed > /dev/null; then
+    gem update "$@"
+  else
+    gem install "$@"
+    rbenv rehash
+  fi
+}
+
+set -e
+
+HOMEBREW_PREFIX="/usr/local"
+
+if [ -d "$HOMEBREW_PREFIX" ]; then
+  if ! [ -r "$HOMEBREW_PREFIX" ]; then
+    sudo chown -R "$LOGNAME:admin" /usr/local
+  fi
+else
+  sudo mkdir "$HOMEBREW_PREFIX"
+  sudo chflags norestricted "$HOMEBREW_PREFIX"
+  sudo chown -R "$LOGNAME:admin" "$HOMEBREW_PREFIX"
+fi
+
+case "$SHELL" in
+  */zsh) : ;;
+  *)
+    fancy_echo "Changing your shell to zsh ..."
+      chsh -s "$(which zsh)"
+    ;;
+esac
+
+if ! command -v brew >/dev/null; then
+  fancy_echo "Installing Homebrew ..."
+    curl -fsS \
+      'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
+
+    export PATH="/usr/local/bin:$PATH"
+fi
+
+if brew list | grep -Fq brew-cask; then
+  fancy_echo "Uninstalling old Homebrew-Cask ..."
+  brew uninstall --force brew-cask
+fi
+
+fancy_echo "Updating Homebrew formulae ..."
+brew update
+brew bundle --file=- <<EOF
+cask_args appdir: "/Applications"
+
+tap "caskroom/versions"
+
+# Unix
+brew "git"
+brew "openssl"
+brew "zsh"
+brew "node"
+brew "rbenv"
+brew "ruby-build"
+
+cask "1password"
+cask "gitup"
+cask "iterm2-nightly"
+cask "sizeup"
+cask "slack"
+cask "spotify"
+cask "sublime-text3"
+EOF
+
+fancy_echo "Configuring dotfiles ..."
+
+if [ ! -d "/Users/filiptepper/.dotfiles" ]; then
+  git clone git://github.com/filiptepper/dotfiles ~/.dotfiles
+  cd ~/.dotfiles
+  rake
+fi
+
+if [ ! -f "/usr/local/bin/subl" ]; then
+  ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin
+fi
+
+fancy_echo "Configuring Ruby ..."
+
+ruby_version="2.2.4"
+# shellcheck disable=SC2016
+eval "$(rbenv init -)"
+
+if ! rbenv versions | grep -Fq "$ruby_version"; then
+  RUBY_CONFIGURE_OPTS=--with-openssl-dir=/usr/local/opt/openssl rbenv install -s "$ruby_version"
+fi
+
+rbenv global "$ruby_version"
+rbenv shell "$ruby_version"
+gem update --system
+gem_install_or_update 'bundler'
+number_of_cores=$(sysctl -n hw.ncpu)
+bundle config --global jobs $((number_of_cores - 1))
+
+fancy_echo "Configuring OS X ..."
+
+defaults write com.apple.dock tilesize -int 16
+defaults write com.apple.dock persistent-apps -array
+defaults write com.apple.dock dashboard-in-overlay -bool true
+defaults write com.apple.dock autohide-delay -float 0
+defaults write com.apple.dock autohide-time-modifier -float 0
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock orientation -string right
+
+defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+
+defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+defaults write com.apple.Safari ProxiesInBookmarksBar "()"
+defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
+defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2BackspaceKeyNavigationEnabled -bool true
+defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+defaults write com.apple.Safari IncludeDevelopMenu -bool true
+defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
+defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
+
+defaults write NSGlobalDomain NSWindowResizeTime -float 0.001
+defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
+defaults write -g ApplePressAndHoldEnabled -bool false
+defaults write NSGlobalDomain AppleEnableMenuBarTransparency -bool false
+defaults write com.apple.LaunchServices LSQuarantine -bool false
+defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+defaults write com.apple.terminal StringEncodings -array 4
+defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
+defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
+defaults write NSGlobalDomain AppleFontSmoothing -int 2
+
+chflags nohidden ~/Library
+
+sudo defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName
+
+defaults write com.irradiatedsoftware.SizeUp StartAtLogin -bool true
+defaults write com.irradiatedsoftware.SizeUp ShowPrefsOnNextStart -bool false
+
+defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
+
+defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
+hash tmutil &> /dev/null && sudo tmutil disablelocal
+
+killall Dock
+killall Finder
+
+sudo pmset -a hibernatemode 0
+
+if [ -f "/var/vm/sleepimage" ]; then
+  sudo rm /var/vm/sleepimage
+fi
+
+systemsetup -setcomputersleep Off > /dev/null
+
+sudo pmset -a sms 0
+
+sudo tmutil disablelocal
