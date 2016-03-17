@@ -57,22 +57,34 @@ brew bundle --file=- <<EOF
 cask_args appdir: "/Applications"
 
 tap "caskroom/versions"
+tap "caskroom/fonts"
+tap "homebrew/nginx"
+tap "raggi/ale"
 
 # Unix
 brew "git"
 brew "openssl"
+brew "openssl-osx-ca"
 brew "zsh"
 brew "node"
 brew "rbenv"
 brew "ruby-build"
+brew "libmaxminddb"
+brew "postgresql"
 
 cask "1password"
+cask "dockertoolbox"
+cask "dropbox"
 cask "gitup"
+cask "google-chrome"
 cask "iterm2-nightly"
+cask "openresty"
 cask "sizeup"
 cask "slack"
 cask "spotify"
 cask "sublime-text3"
+
+cask "font-hack"
 EOF
 
 fancy_echo "Configuring dotfiles ..."
@@ -101,6 +113,7 @@ rbenv global "$ruby_version"
 rbenv shell "$ruby_version"
 gem update --system
 gem_install_or_update 'bundler'
+gem_install_or_update 'foreman'
 number_of_cores=$(sysctl -n hw.ncpu)
 bundle config --global jobs $((number_of_cores - 1))
 
