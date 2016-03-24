@@ -130,6 +130,12 @@ defaults write com.apple.dock autohide-time-modifier -float 0
 defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock orientation -string bottom
 
+# dark menu bar
+defaults write NSGlobalDomain AppleInterfaceStyle Dark
+
+# hide menu bar
+defaults write NSGlobalDomain _HIHideMenuBar -bool true
+
 defaults write NSGlobalDomain AppleFontSmoothing -int 2
 
 # utf-8 in terminal
