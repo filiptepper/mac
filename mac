@@ -57,6 +57,7 @@ cask_args appdir: "/Applications"
 
 tap "caskroom/versions"
 tap "caskroom/fonts"
+tap "homebrew/dupes"
 tap "homebrew/nginx"
 tap "homebrew/versions"
 tap "raggi/ale"
@@ -72,6 +73,9 @@ brew "ruby-build"
 brew "libmaxminddb"
 brew "postgresql"
 brew "ansible19"
+brew "openresty"
+brew "apple-gcc42"
+brew "v8-315"
 
 cask "1password"
 cask "dockertoolbox"
@@ -80,7 +84,6 @@ cask "gitup"
 cask "google-chrome"
 cask "httpscoop"
 cask "iterm2-nightly"
-cask "openresty"
 cask "psequel"
 cask "sizeup"
 cask "slack"
@@ -89,6 +92,8 @@ cask "sublime-text3"
 
 cask "font-hack"
 EOF
+
+brew link --force v8-315
 
 fancy_echo "Configuring dotfiles ..."
 
