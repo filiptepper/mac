@@ -6,15 +6,6 @@ fancy_echo() {
   printf "\n$fmt\n" "$@"
 }
 
-gem_install_or_update() {
-  if gem list "$1" --installed > /dev/null; then
-    gem update "$@"
-  else
-    gem install "$@"
-    rbenv rehash
-  fi
-}
-
 set -e
 
 HOMEBREW_PREFIX="/usr/local"
@@ -64,21 +55,9 @@ tap "raggi/ale"
 
 # Unix
 brew "git"
-brew "openssl"
-brew "openssl-osx-ca"
 brew "zsh"
-brew "node"
-brew "rbenv"
-brew "ruby-build"
-brew "libmaxminddb"
-brew "postgresql"
-brew "ansible"
-brew "openresty"
-brew "apple-gcc42"
-brew "v8-315"
 
 cask "1password"
-cask "dockertoolbox"
 cask "dropbox"
 cask "gitup"
 cask "google-chrome"
@@ -93,8 +72,6 @@ cask "sublime-text3"
 cask "font-hack"
 EOF
 
-brew link --force v8-315
-
 fancy_echo "Configuring dotfiles ..."
 
 if [ ! -d "/Users/filiptepper/.dotfiles" ]; then
@@ -106,23 +83,6 @@ fi
 if [ ! -f "/usr/local/bin/subl" ]; then
   ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin
 fi
-
-fancy_echo "Configuring Ruby ..."
-
-ruby_version="2.2.4"
-eval "$(rbenv init -)"
-
-if ! rbenv versions | grep -Fq "$ruby_version"; then
-  RUBY_CONFIGURE_OPTS=--with-openssl-dir=/usr/local/opt/openssl rbenv install -s "$ruby_version"
-fi
-
-rbenv global "$ruby_version"
-rbenv shell "$ruby_version"
-gem update --system
-gem_install_or_update 'bundler'
-gem_install_or_update 'foreman'
-number_of_cores=$(sysctl -n hw.ncpu)
-bundle config --global jobs $((number_of_cores - 1))
 
 fancy_echo "Configuring OS X ..."
 
