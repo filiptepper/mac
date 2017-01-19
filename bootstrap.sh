@@ -49,6 +49,7 @@ brew "autoconf"
 brew "aws"
 brew "git"
 brew "go"
+brew "m-cli"
 brew "mas"
 brew "rbenv"
 brew "ruby-build"
@@ -123,14 +124,6 @@ fancy_echo sublime-text configure
 if [ ! -f "/usr/local/bin/subl" ]; then
   ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin
 fi
-
-# ****************************************************************************
-# *                                     m                                    *
-# ****************************************************************************
-
-fancy_echo m install
-
-curl -fsSL https://raw.githubusercontent.com/rgcr/m-cli/master/install.sh | sh
 
 # ****************************************************************************
 # *                                   macos                                  *
