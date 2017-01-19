@@ -1,13 +1,22 @@
 #!/bin/sh
 
-fancy_echo() {
-  local fmt="$1"; shift
+RESET="\x1B[0m"
+YELLOW="\x1b[33m"
+DIM="\x1b[2m"
+BRIGHT="\x1b[1m"
 
-  printf "\n$fmt\n" "$@"
+fancy_echo() {
+  SECTION=$1; shift
+  echo "\n ${BRIGHT}${RESET} ${DIM}[${RESET}${YELLOW}$SECTION${RESET}${DIM}]${RESET} ${BRIGHT}$@${RESET}\n"
 }
 
 set -e
 
+# ****************************************************************************
+# *                                 homebrew                                 *
+# ****************************************************************************
+
+fancy_echo homebrew configure
 HOMEBREW_PREFIX="/usr/local"
 
 if [ -d "$HOMEBREW_PREFIX" ]; then
@@ -20,71 +29,114 @@ else
   sudo chown -R "$LOGNAME:admin" "$HOMEBREW_PREFIX"
 fi
 
-case "$SHELL" in
-  */zsh) : ;;
-  *)
-    fancy_echo "Changing your shell to zsh ..."
-      chsh -s "$(which zsh)"
-    ;;
-esac
-
 if ! command -v brew >/dev/null; then
-  fancy_echo "Installing Homebrew ..."
+  fancy_echo homebrew install
     curl -fsS \
       'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
 
     export PATH="/usr/local/bin:$PATH"
 fi
 
-if brew list | grep -Fq brew-cask; then
-  fancy_echo "Uninstalling old Homebrew-Cask ..."
-  brew uninstall --force brew-cask
-fi
-
-fancy_echo "Updating Homebrew formulae ..."
+fancy_echo homebrew update
 brew update
+
+fancy_echo homebrew brew
 brew bundle --file=- <<EOF
 cask_args appdir: "/Applications"
 
-tap "caskroom/versions"
-tap "caskroom/fonts"
-tap "homebrew/dupes"
-tap "homebrew/nginx"
-tap "homebrew/versions"
-tap "raggi/ale"
-
-# Unix
+brew "ansible"
+brew "autoconf"
+brew "aws"
 brew "git"
+brew "go"
+brew "mas"
+brew "rbenv"
+brew "ruby-build"
+brew "terraform"
+brew "terraform-inventory"
 brew "zsh"
 
 cask "1password"
+cask "adobe-photoshop-lightroom"
+cask "alfred"
+cask "appzapper"
+cask "backblaze"
+cask "boom"
 cask "dropbox"
+cask "firefox"
+cask "flux"
 cask "gitup"
 cask "google-chrome"
+cask "google-drive"
+cask "google-photos-backup"
+cask "handbrake"
 cask "httpscoop"
-cask "iterm2-nightly"
+cask "iterm2"
+cask "nvalt"
 cask "psequel"
+cask "screenhero"
 cask "sizeup"
 cask "slack"
 cask "spotify"
-cask "sublime-text3"
+cask "sublime-text"
+cask "things"
+cask "wmail"
 
 cask "font-hack"
 EOF
 
-fancy_echo "Configuring dotfiles ..."
+# ****************************************************************************
+# *                                    zsh                                   *
+# ****************************************************************************
+
+fancy_echo zsh chsh
+chsh -s "$(which zsh)"
+
+# ****************************************************************************
+# *                                   xcode                                  *
+# ****************************************************************************
+
+fancy_echo xcode install
+
+XCODE=`mas search xcode | grep "^[0-9]* Xcode$" | awk '{ print $1 }'`
+mas install $XCODE
+xcode-select --install
+
+# ****************************************************************************
+# *                                 dotfiles                                 *
+# ****************************************************************************
+
+fancy_echo dotfiles configure
 
 if [ ! -d "/Users/filiptepper/.dotfiles" ]; then
-  git clone git://github.com/filiptepper/dotfiles ~/.dotfiles
+  git clone git@github.com:filiptepper/dotfiles.git ~/.dotfiles
   cd ~/.dotfiles
   rake
 fi
+
+# ****************************************************************************
+# *                               sublime-text                               *
+# ****************************************************************************
+
+fancy_echo sublime-text configure
 
 if [ ! -f "/usr/local/bin/subl" ]; then
   ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin
 fi
 
-fancy_echo "Configuring OS X ..."
+# ****************************************************************************
+# *                                     m                                    *
+# ****************************************************************************
+
+fancy_echo m install
+
+curl -fsSL https://raw.githubusercontent.com/rgcr/m-cli/master/install.sh | sh
+
+# ****************************************************************************
+# *                                   macos                                  *
+# ****************************************************************************
+
+fancy_echo macos configure
 
 # dock
 defaults write com.apple.dock tilesize -int 16
@@ -101,13 +153,13 @@ defaults write NSGlobalDomain AppleInterfaceStyle Dark
 # hide menu bar
 defaults write NSGlobalDomain _HIHideMenuBar -bool true
 
+# font smoothing
 defaults write NSGlobalDomain AppleFontSmoothing -int 2
 
 # utf-8 in terminal
 defaults write com.apple.terminal StringEncodings -array 4
 
-
-# safari
+# safari.app
 # do not send data to Apple
 defaults write com.apple.Safari UniversalSearchEnabled -bool false
 defaults write com.apple.Safari SuppressSearchSuggestions -bool true
@@ -152,6 +204,7 @@ defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
 # do not display threads
 defaults write com.apple.mail DraftsViewerAttributes -dict-add "DisplayInThreadedMode" -string "no"
 
+# spotlight
 # do not index /Volumes
 sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
 
@@ -242,11 +295,11 @@ defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
 # disable smart dashes
 defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
 
-# sizeup
+# sizeup.app
 defaults write com.irradiatedsoftware.SizeUp StartAtLogin -bool true
 defaults write com.irradiatedsoftware.SizeUp ShowPrefsOnNextStart -bool false
 
-# time machine
+# time machine.app
 # don't ask for new drives
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
