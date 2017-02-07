@@ -44,9 +44,11 @@ fancy_echo homebrew brew
 brew bundle --file=- <<EOF
 cask_args appdir: "/Applications"
 
+tap "caskroom/fonts"
+
 brew "ansible"
 brew "autoconf"
-brew "aws"
+brew "awscli"
 brew "git"
 brew "go"
 brew "m-cli"
@@ -59,7 +61,6 @@ brew "terraform-inventory"
 brew "zsh"
 
 cask "1password"
-cask "adobe-photoshop-lightroom"
 cask "alfred"
 cask "appzapper"
 cask "backblaze"
@@ -82,7 +83,6 @@ cask "slack"
 cask "spotify"
 cask "sublime-text"
 cask "things"
-cask "wmail"
 
 cask "font-hack"
 EOF
@@ -92,17 +92,7 @@ EOF
 # ****************************************************************************
 
 fancy_echo zsh chsh
-chsh -s "$(which zsh)"
-
-# ****************************************************************************
-# *                                   xcode                                  *
-# ****************************************************************************
-
-fancy_echo xcode install
-
-XCODE=`mas search xcode | grep "^[0-9]* Xcode$" | awk '{ print $1 }'`
-mas install $XCODE
-xcode-select --install
+chsh -s "$(which zsh)" || true
 
 # ****************************************************************************
 # *                                 dotfiles                                 *
@@ -376,7 +366,7 @@ for app in "Activity Monitor" "Address Book" "Calendar" "Contacts" "cfprefsd" \
   "Dock" "Finder" "Google Chrome" "Google Chrome Canary" "Mail" "Messages" \
   "Opera" "Photos" "Safari" "SizeUp" "Spectacle" "SystemUIServer" "Terminal" \
   "Transmission" "Tweetbot" "Twitter" "iCal"; do
-  killall "${app}" &> /dev/null
+  killall "${app}" || true
 done
 
 # ****************************************************************************
@@ -389,3 +379,5 @@ sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
 sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setallowsigned off
 sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setallowsignedapp off
 sudo pkill -HUP socketfilterfw
+
+fancy_echo done thanks
