@@ -83,6 +83,7 @@ cask "slack"
 cask "spotify"
 cask "sublime-text"
 cask "things"
+cask "tunnelblick"
 
 cask "font-hack"
 EOF
@@ -92,6 +93,13 @@ EOF
 # ****************************************************************************
 
 fancy_echo zsh chsh
+
+ZSH_PATH="$(which zsh)"
+if grep -Fxq "$ZSH_PATH" /etc/shells ; then
+  : # no need to add path to /etc/shells
+else
+  echo "$ZSH_PATH" | sudo tee -a /etc/shells
+fi
 chsh -s "$(which zsh)" || true
 
 # ****************************************************************************
