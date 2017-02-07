@@ -51,6 +51,7 @@ brew "git"
 brew "go"
 brew "m-cli"
 brew "mas"
+brew "openssl"
 brew "rbenv"
 brew "ruby-build"
 brew "terraform"
@@ -377,3 +378,14 @@ for app in "Activity Monitor" "Address Book" "Calendar" "Contacts" "cfprefsd" \
   "Transmission" "Tweetbot" "Twitter" "iCal"; do
   killall "${app}" &> /dev/null
 done
+
+# ****************************************************************************
+# *                                 security                                 *
+# ****************************************************************************
+
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.captive.control Active -bool false
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setallowsigned off
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setallowsignedapp off
+sudo pkill -HUP socketfilterfw
